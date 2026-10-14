@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nixus Pad - Bloc de Notas</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #1e293b;
+            --border-color: #e2e8f0;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container img {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .main-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Vistas / Escenas */
+        .view {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        /* Escena 1: Menú Principal */
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .menu-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .note-card {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .note-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+        }
+
+        .note-card-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .note-card-snippet {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-muted);
+            background-color: var(--white);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+        }
+
+        /* Escena 2: Editor de Nota */
+        .editor-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f1f5f9;
+        }
+
+        .btn-delete {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .editor-box {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            flex: 1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .note-title-input {
+            font-size: 1.8rem;
+            font-weight: 700;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .note-body-textarea {
+            flex: 1;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 1.1rem;
+            font-family: inherit;
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 350px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="Nixus-pad-logo-16-9.jpg" alt="Nixus Pad Logo">
+        </div>
+    </header>
+
+    <div class="main-container">
+
+        <!-- ESCENA 1: MENÚ PRINCIPAL -->
+        <div id="menuView" class="view active">
+            <div class="menu-header">
+                <h1 class="menu-title">Mis Notas</h1>
+                <button class="btn-primary" id="btnNewNote">+ Nueva Nota</button>
+            </div>
+            <div class="notes-grid" id="notesGrid">
+                <!-- Las tarjetas de notas se cargan aquí -->
+            </div>
+        </div>
+
+        <!-- ESCENA 2: PANTALLA DE ESCRITURA / EDICIÓN -->
+        <div id="editorView" class="view">
+            <div class="editor-topbar">
+                <button class="btn-secondary" id="btnBackToMenu">← Volver al Menú</button>
+                <button class="btn-delete" id="btnDeleteNote">Eliminar Nota</button>
+            </div>
+            <div class="editor-box">
+                <input type="text" id="noteTitleInput" class="note-title-input" placeholder="Título de la nota...">
+                <textarea id="noteBodyTextarea" class="note-body-textarea" placeholder="Escribe tu nota libre aquí..."></textarea>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Sistema de almacenamiento y escenas
+        let notes = JSON.parse(localStorage.getItem('nixus_pad_notes')) || [];
+        let currentNoteId = null;
+
+        const menuView = document.getElementById('menuView');
+        const editorView = document.getElementById('editorView');
+        const notesGrid = document.getElementById('notesGrid');
+        const btnNewNote = document.getElementById('btnNewNote');
+        const btnBackToMenu = document.getElementById('btnBackToMenu');
+        const btnDeleteNote = document.getElementById('btnDeleteNote');
+        const noteTitleInput = document.getElementById('noteTitleInput');
+        const noteBodyTextarea = document.getElementById('noteBodyTextarea');
+
+        function saveNotes() {
+            localStorage.setItem('nixus_pad_notes', JSON.stringify(notes));
+        }
+
+        function switchView(viewName) {
+            if (viewName === 'menu') {
+                menuView.classList.add('active');
+                editorView.classList.remove('active');
+                renderNotesGrid();
+            } else if (viewName === 'editor') {
+                menuView.classList.remove('active');
+                editorView.classList.add('active');
+            }
+        }
+
+        function renderNotesGrid() {
+            notesGrid.innerHTML = '';
+            if (notes.length === 0) {
+                notesGrid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No hay notas creadas</h3>
+                        <p>Haz clic en "+ Nueva Nota" para empezar a escribir.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            notes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'note-card';
+                card.onclick = () => openNote(note.id);
+
+                const title = document.createElement('div');
+                title.className = 'note-card-title';
+                title.textContent = note.title || 'Nota sin título';
+
+                const snippet = document.createElement('div');
+                snippet.className = 'note-card-snippet';
+                snippet.textContent = note.body || 'Sin contenido...';
+
+                card.appendChild(title);
+                card.appendChild(snippet);
+                notesGrid.appendChild(card);
+            });
+        }
+
+        function openNote(id) {
+            currentNoteId = id;
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                noteTitleInput.value = note.title;
+                noteBodyTextarea.value = note.body;
+                switchView('editor');
+            }
+        }
+
+        function createNewNote() {
+            const newNote = {
+                id: Date.now().toString(),
+                title: 'Nueva Nota',
+                body: ''
+            };
+            notes.unshift(newNote);
+            saveNotes();
+            openNote(newNote.id);
+        }
+
+        function updateCurrentNote() {
+            if (!currentNoteId) return;
+            const note = notes.find(n => n.id === currentNoteId);
+            if (note) {
+                note.title = noteTitleInput.value;
+                note.body = noteBodyTextarea.value;
+                saveNotes();
+            }
+        }
+
+        function deleteCurrentNote() {
+            if (!currentNoteId) return;
+            notes = notes.filter(n => n.id !== currentNoteId);
+            currentNoteId = null;
+            saveNotes();
+            switchView('menu');
+        }
+
+        // Eventos
+        btnNewNote.onclick = createNewNote;
+        btnBackToMenu.onclick = () => switchView('menu');
+        btnDeleteNote.onclick = deleteCurrentNote;
+        noteTitleInput.oninput = updateCurrentNote;
+        noteBodyTextarea.oninput = updateCurrentNote;
+
+        // Inicializar al cargar
+        renderNotesGrid();
+    </script>
+</body>
+</html>
